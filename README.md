@@ -4,6 +4,8 @@ A fast, free window switcher for macOS: press a shortcut, see live previews of e
 
 Native Swift (SwiftUI + AppKit), macOS 14 or later.
 
+**Website: [nithinkr080.github.io/Whisk](https://nithinkr080.github.io/Whisk/)**
+
 ![Whisk's Liquid Glass design](docs/liquid-glass.jpg)
 
 ## Features

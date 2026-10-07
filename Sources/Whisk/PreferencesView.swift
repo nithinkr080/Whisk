@@ -78,28 +78,32 @@ struct PreferencesView: View {
     var body: some View {
         HStack(spacing: 0) {
             Sidebar(selection: $nav.tab)
-                .frame(width: 220)
-            Divider()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(nav.tab.title).font(.system(size: 28, weight: .bold))
+                .frame(width: 214)
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 26) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(nav.tab.title).font(.system(size: 26, weight: .bold)).tracking(-0.3)
                         if !nav.tab.subtitle.isEmpty {
-                            Text(nav.tab.subtitle).font(.callout).foregroundStyle(.secondary)
+                            Text(nav.tab.subtitle).font(.system(size: 13)).foregroundStyle(.secondary)
                         }
                     }
-                    switch nav.tab {
-                    case .general: GeneralPage()
-                    case .appearance: AppearancePage()
-                    case .windows: WindowsPage()
-                    case .permissions: PermissionsPage()
-                    case .about: AboutPage()
+                    VStack(alignment: .leading, spacing: 24) {
+                        switch nav.tab {
+                        case .general: GeneralPage()
+                        case .appearance: AppearancePage()
+                        case .windows: WindowsPage()
+                        case .permissions: PermissionsPage()
+                        case .about: AboutPage()
+                        }
                     }
+                    .id(nav.tab)
+                    .transition(.opacity)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 28)
+                .padding(.horizontal, 32)
                 .padding(.top, 46)
-                .padding(.bottom, 30)
+                .padding(.bottom, 32)
+                .animation(.easeOut(duration: 0.18), value: nav.tab)
             }
             .background(Color(nsColor: .windowBackgroundColor).ignoresSafeArea())
         }
@@ -124,41 +128,60 @@ private struct Sidebar: View {
     @Binding var selection: PrefsTab
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 10) {
                 Image(nsImage: NSApp.applicationIconImage)
-                    .resizable().frame(width: 38, height: 38)
+                    .resizable().frame(width: 36, height: 36)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("Whisk").font(.system(size: 15, weight: .semibold))
-                    Text("Window switcher").font(.caption).foregroundStyle(.secondary)
+                    Text("Whisk").font(.system(size: 14.5, weight: .semibold))
+                    Text("Window switcher").font(.system(size: 11)).foregroundStyle(.secondary)
                 }
             }
             .padding(.horizontal, 10)
-            .padding(.top, 44)
-            .padding(.bottom, 18)
+            .padding(.top, 46)
+            .padding(.bottom, 20)
 
             ForEach(PrefsTab.allCases) { tab in
-                Button { selection = tab } label: {
-                    HStack(spacing: 10) {
-                        IconBadge(symbol: tab.symbol, tint: tab.tint)
-                        Text(tab.title).font(.system(size: 13.5, weight: selection == tab ? .semibold : .regular))
-                        Spacer()
-                    }
-                    .padding(.horizontal, 8).padding(.vertical, 6)
-                    .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .fill(selection == tab ? Color.accentColor.opacity(0.22) : Color.clear))
-                    .contentShape(Rectangle())
+                SidebarItem(tab: tab, selected: selection == tab) {
+                    withAnimation(.snappy(duration: 0.2)) { selection = tab }
                 }
-                .buttonStyle(.plain)
             }
             Spacer()
-            Text("Free forever. No subscriptions.")
-                .font(.caption).foregroundStyle(.secondary)
-                .padding(.horizontal, 10).padding(.bottom, 14)
+            HStack(spacing: 6) {
+                Image(systemName: "heart.fill").font(.system(size: 9)).foregroundStyle(.pink.opacity(0.8))
+                Text("Free. No subscriptions.").font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+            }
+            .padding(.horizontal, 12).padding(.bottom, 16)
         }
         .padding(.horizontal, 10)
         .frame(maxHeight: .infinity)
         .background(VisualEffect(material: .sidebar).ignoresSafeArea())
+        .overlay(alignment: .trailing) {
+            Rectangle().fill(Color.primary.opacity(0.08)).frame(width: 0.5).ignoresSafeArea()
+        }
+    }
+}
+
+private struct SidebarItem: View {
+    let tab: PrefsTab
+    let selected: Bool
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                IconBadge(symbol: tab.symbol, tint: tab.tint, size: 24)
+                Text(tab.title).font(.system(size: 13.5, weight: selected ? .semibold : .medium))
+                Spacer()
+            }
+            .padding(.horizontal, 8).padding(.vertical, 5)
+            .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(Color.primary.opacity(selected ? 0.10 : (hovering ? 0.05 : 0))))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
     }
 }
 
@@ -167,13 +190,29 @@ private struct Sidebar: View {
 private struct IconBadge: View {
     let symbol: String
     let tint: Color
+    var size: CGFloat = 28
     var body: some View {
         Image(systemName: symbol)
-            .font(.system(size: 12.5, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: 26, height: 26)
-            .background(RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .fill(LinearGradient(colors: [tint.opacity(0.85), tint], startPoint: .top, endPoint: .bottom)))
+            .font(.system(size: size * 0.46, weight: .semibold))
+            .foregroundStyle(tint)
+            .frame(width: size, height: size)
+            .background(RoundedRectangle(cornerRadius: size * 0.3, style: .continuous).fill(tint.opacity(0.16)))
+    }
+}
+
+private struct Hairline: View {
+    var inset: CGFloat = 14
+    var body: some View {
+        Rectangle().fill(Color.primary.opacity(0.07)).frame(height: 0.5).padding(.leading, inset)
+    }
+}
+
+private struct Card<Content: View>: View {
+    @ViewBuilder let content: Content
+    var body: some View {
+        VStack(spacing: 0) { content }
+            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.primary.opacity(0.045)))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5))
     }
 }
 
@@ -186,13 +225,12 @@ private struct Section<Content: View>: View {
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased())
-                .font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).padding(.leading, 4)
-            VStack(spacing: 0) { content }
-                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color(nsColor: .controlBackgroundColor)))
-                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(nsColor: .separatorColor).opacity(0.7), lineWidth: 0.5))
+            Text(title)
+                .font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary).padding(.leading, 4)
+            Card { content }
             if let footer {
-                Text(footer).font(.caption).foregroundStyle(.secondary).padding(.horizontal, 4)
+                Text(footer).font(.system(size: 11.5)).foregroundStyle(.secondary).padding(.horizontal, 4)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -211,17 +249,51 @@ private struct Row<Control: View>: View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
                 if let symbol { IconBadge(symbol: symbol, tint: tint) }
-                if let appIcon { Image(nsImage: appIcon).resizable().frame(width: 26, height: 26) }
+                if let appIcon { Image(nsImage: appIcon).resizable().frame(width: 28, height: 28) }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.system(size: 13.5))
-                    if let subtitle { Text(subtitle).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
+                    Text(title).font(.system(size: 13.5, weight: .medium))
+                    if let subtitle { Text(subtitle).font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
                 }
                 Spacer(minLength: 12)
                 control
             }
-            .padding(.horizontal, 14).padding(.vertical, 10)
-            if divider { Divider().padding(.leading, symbol == nil && appIcon == nil ? 14 : 52) }
+            .padding(.horizontal, 14).padding(.vertical, 11)
+            if divider { Hairline(inset: symbol == nil && appIcon == nil ? 14 : 54) }
         }
+    }
+}
+
+/// A sliding-pill segmented control (replaces the stock segmented Picker, which looks dated).
+private struct Segmented<T: Hashable>: View {
+    let options: [T]
+    let title: (T) -> String
+    @Binding var selection: T
+    @Namespace private var pill
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(options, id: \.self) { option in
+                let on = option == selection
+                Text(title(option))
+                    .font(.system(size: 12.5, weight: on ? .semibold : .medium))
+                    .foregroundStyle(on ? Color.primary : Color.secondary)
+                    .lineLimit(1).fixedSize()
+                    .padding(.horizontal, 12).padding(.vertical, 5)
+                    .background {
+                        if on {
+                            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                .fill(Color.primary.opacity(0.13))
+                                .shadow(color: .black.opacity(0.12), radius: 1.5, y: 0.5)
+                                .matchedGeometryEffect(id: "pill", in: pill)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture { withAnimation(.snappy(duration: 0.22)) { selection = option } }
+            }
+        }
+        .padding(2)
+        .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.primary.opacity(0.06)))
+        .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).strokeBorder(Color.primary.opacity(0.06), lineWidth: 0.5))
     }
 }
 
@@ -229,12 +301,13 @@ private struct KeyCap: View {
     let label: String
     var body: some View {
         Text(label)
-            .font(.system(size: 12, weight: .medium, design: .rounded))
-            .padding(.horizontal, 7)
-            .frame(minWidth: 26, minHeight: 24)
-            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Color(nsColor: .windowBackgroundColor)))
-            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1))
-            .shadow(color: .black.opacity(0.18), radius: 0, y: 1.5)
+            .font(.system(size: 11.5, weight: .medium, design: .rounded))
+            .foregroundStyle(.primary.opacity(0.85))
+            .padding(.horizontal, 6)
+            .frame(minWidth: 24, minHeight: 22)
+            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Color.primary.opacity(0.07)))
+            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
+            .shadow(color: .black.opacity(0.14), radius: 0, y: 1)
     }
 }
 
@@ -242,6 +315,35 @@ private struct KeyCombo: View {
     let keys: [String]
     var body: some View {
         HStack(spacing: 4) { ForEach(Array(keys.enumerated()), id: \.offset) { KeyCap(label: $0.element) } }
+    }
+}
+
+/// Compact two-column list of keys that work while the switcher is open.
+private struct ShortcutGrid: View {
+    let items: [(String, [String])]
+    var body: some View {
+        let left = stride(from: 0, to: items.count, by: 2).map { items[$0] }
+        let right = stride(from: 1, to: items.count, by: 2).map { items[$0] }
+        HStack(alignment: .top, spacing: 0) {
+            column(left)
+            Rectangle().fill(Color.primary.opacity(0.07)).frame(width: 0.5)
+            column(right)
+        }
+    }
+    private func column(_ rows: [(String, [String])]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { i, r in
+                HStack {
+                    Text(r.0).font(.system(size: 13, weight: .medium))
+                    Spacer(minLength: 8)
+                    KeyCombo(keys: r.1)
+                }
+                .padding(.horizontal, 14).padding(.vertical, 10)
+                if i < rows.count - 1 { Hairline() }
+            }
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -254,11 +356,8 @@ private struct GeneralPage: View {
         let mod = settings.triggerModifier.symbol
         Section("Shortcut", footer: settings.triggerModifier == .command
                 ? "Command replaces the macOS app switcher (⌘Tab) while Whisk is running." : nil) {
-            Row(symbol: "keyboard.fill", tint: .indigo, title: "Hold to switch", subtitle: "Hold this key and press Tab.") {
-                Picker("", selection: $settings.triggerModifier) {
-                    ForEach(TriggerModifier.allCases) { Text($0.shortTitle).tag($0) }
-                }
-                .pickerStyle(.segmented).labelsHidden().frame(width: 250)
+            Row(symbol: "keyboard.fill", tint: .indigo, title: "Hold to switch", subtitle: "Hold, then press Tab.") {
+                Segmented(options: Array(TriggerModifier.allCases), title: { $0.shortTitle }, selection: $settings.triggerModifier)
             }
             Row(title: "All windows", subtitle: "Cycle through every open window.") { KeyCombo(keys: [mod, "Tab"]) }
             Row(title: "Go backwards") { KeyCombo(keys: [mod, "⇧", "Tab"]) }
@@ -266,13 +365,15 @@ private struct GeneralPage: View {
         }
 
         Section("While the switcher is open", footer: "Releasing \(mod) switches to the highlighted window. Hovering with the mouse also selects.") {
-            Row(title: "Move selection") { KeyCombo(keys: ["←", "→", "↑", "↓"]) }
-            Row(title: "Switch to selected window") { KeyCombo(keys: ["↩"]) }
-            Row(title: "Cancel") { KeyCombo(keys: ["esc"]) }
-            Row(title: "Quit the app") { KeyCombo(keys: ["Q"]) }
-            Row(title: "Close the window") { KeyCombo(keys: ["W"]) }
-            Row(title: "Minimize the window") { KeyCombo(keys: ["M"]) }
-            Row(title: "Hide the app", divider: false) { KeyCombo(keys: ["H"]) }
+            ShortcutGrid(items: [
+                ("Move selection", ["←", "→", "↑", "↓"]),
+                ("Switch to window", ["↩"]),
+                ("Cancel", ["esc"]),
+                ("Quit app", ["Q"]),
+                ("Close window", ["W"]),
+                ("Minimize", ["M"]),
+                ("Hide app", ["H"]),
+            ])
         }
 
         Section("Behavior") {
@@ -313,10 +414,7 @@ private struct AppearancePage: View {
 
         Section("Layout") {
             Row(symbol: "arrow.up.left.and.arrow.down.right", tint: .teal, title: "Size", subtitle: "Bigger tiles show more detail; many windows shrink to fit.") {
-                Picker("", selection: $settings.tileSize) {
-                    ForEach(TileSize.allCases) { Text($0.title).tag($0) }
-                }
-                .pickerStyle(.segmented).labelsHidden().frame(width: 200)
+                Segmented(options: Array(TileSize.allCases), title: { $0.title }, selection: $settings.tileSize)
             }
             Row(symbol: "photo.fill", tint: .pink, title: "Window previews", subtitle: "Show a live picture of each window instead of just the app icon.") {
                 Toggle("", isOn: $settings.showThumbnails).toggleStyle(.switch).labelsHidden()
@@ -351,7 +449,7 @@ private struct AppearancePage: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .padding(.vertical, 16)
         }
     }
 }
@@ -374,7 +472,7 @@ private struct SwitcherPreview: View {
     }()
     @State private var panelSize = CGSize(width: 600, height: 240)
 
-    private let boxSize = CGSize(width: 524, height: 290)
+    private let boxSize = CGSize(width: 536, height: 270)
 
     private var scheme: ColorScheme {
         switch settings.theme {
@@ -401,8 +499,8 @@ private struct SwitcherPreview: View {
                 .allowsHitTesting(false)
         }
         .frame(height: boxSize.height)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color(nsColor: .separatorColor).opacity(0.7), lineWidth: 0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5))
         .onAppear(perform: relayout)
         .onReceive(settings.objectWillChange.receive(on: RunLoop.main)) { _ in relayout() }
         // Step the selection along so the preview shows how switching feels in the chosen design.
@@ -434,7 +532,8 @@ private struct ThemeCard: View {
             .frame(width: 110, height: 68)
             .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .strokeBorder(selected ? Color.accentColor : Color(nsColor: .separatorColor), lineWidth: selected ? 3 : 1))
+                .strokeBorder(selected ? Color.accentColor : Color.primary.opacity(0.14), lineWidth: selected ? 2.5 : 0.5))
+            .padding(2)
             Text(choice.title).font(.callout).fontWeight(selected ? .semibold : .regular)
                 .foregroundStyle(selected ? Color.accentColor : Color.primary)
         }
@@ -480,10 +579,7 @@ private struct WindowsPage: View {
 
         Section("Screens") {
             Row(symbol: "display", tint: .indigo, title: "Show windows from", divider: false) {
-                Picker("", selection: $settings.screenFilter) {
-                    ForEach(ScreenFilter.allCases) { Text($0.shortTitle).tag($0) }
-                }
-                .pickerStyle(.segmented).labelsHidden().frame(width: 230)
+                Segmented(options: Array(ScreenFilter.allCases), title: { $0.shortTitle }, selection: $settings.screenFilter)
             }
         }
 
@@ -564,7 +660,7 @@ private struct PermissionsPage: View {
             }
         }
         Button { relaunchApp() } label: { Label("Relaunch Whisk", systemImage: "arrow.clockwise") }
-            .controlSize(.large)
+            .controlSize(.regular)
         Color.clear.frame(height: 0)
             .onReceive(timer) { _ in state.refresh() }
     }
@@ -572,9 +668,12 @@ private struct PermissionsPage: View {
     @ViewBuilder
     private func status(_ granted: Bool, grant: @escaping () -> Void) -> some View {
         if granted {
-            Label("Granted", systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.callout.weight(.medium))
+            Label("Granted", systemImage: "checkmark.circle.fill")
+                .foregroundStyle(.green).font(.system(size: 12, weight: .semibold))
+                .padding(.horizontal, 10).padding(.vertical, 4)
+                .background(Capsule().fill(Color.green.opacity(0.15)))
         } else {
-            Button("Grant…", action: grant).controlSize(.regular)
+            Button("Grant…", action: grant).buttonStyle(.borderedProminent).controlSize(.small)
         }
     }
 }
@@ -583,23 +682,43 @@ private struct PermissionsPage: View {
 
 private struct AboutPage: View {
     var body: some View {
-        VStack(spacing: 14) {
-            Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 96, height: 96)
-            VStack(spacing: 3) {
-                Text("Whisk").font(.system(size: 24, weight: .bold))
+        VStack(spacing: 12) {
+            Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 88, height: 88)
+                .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
+            VStack(spacing: 6) {
+                Text("Whisk").font(.system(size: 24, weight: .bold)).tracking(-0.3)
                 Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")")
-                    .font(.callout).foregroundStyle(.secondary)
+                    .font(.system(size: 11.5, weight: .medium)).foregroundStyle(.secondary)
+                    .padding(.horizontal, 10).padding(.vertical, 3)
+                    .background(Capsule().fill(Color.primary.opacity(0.07)))
             }
             Text("Every feature, free. No subscriptions, no accounts, no tracking.")
-                .multilineTextAlignment(.center).foregroundStyle(.secondary)
+                .font(.system(size: 13)).multilineTextAlignment(.center).foregroundStyle(.secondary)
+            HStack(spacing: 8) {
+                link("Website", "safari", "https://nithinkr080.github.io/Whisk/")
+                link("GitHub", "chevron.left.forwardslash.chevron.right", "https://github.com/nithinkr080/Whisk")
+                link("Report an issue", "exclamationmark.bubble", "https://github.com/nithinkr080/Whisk/issues")
+            }
+            .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 20)
+        .padding(.top, 8)
 
         Section("Tips") {
             Row(symbol: "hand.tap.fill", tint: .blue, title: "Quick tap", subtitle: "Tap the shortcut once to jump to your previous window.") { EmptyView() }
             Row(symbol: "cursorarrow.motionlines", tint: .purple, title: "Hover for controls", subtitle: "Hover a tile to close, minimize or fullscreen that window.") { EmptyView() }
             Row(symbol: "square.stack.3d.up.fill", tint: .green, title: "Works across Spaces", subtitle: "Pick a window in a fullscreen app and Whisk takes you to it.", divider: false) { EmptyView() }
         }
+    }
+
+    private func link(_ title: String, _ symbol: String, _ url: String) -> some View {
+        Link(destination: URL(string: url)!) {
+            Label(title, systemImage: symbol)
+                .font(.system(size: 12, weight: .medium))
+                .padding(.horizontal, 12).padding(.vertical, 6)
+                .background(Capsule().fill(Color.primary.opacity(0.07)))
+                .overlay(Capsule().strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5))
+        }
+        .buttonStyle(.plain)
     }
 }

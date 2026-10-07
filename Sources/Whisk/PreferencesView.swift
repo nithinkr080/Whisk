@@ -491,8 +491,13 @@ private struct SwitcherPreview: View {
                            startPoint: .topLeading, endPoint: .bottomTrailing)
             SwitcherView(model: model, actions: TileActions(hover: { _ in }, click: { _ in }, close: { _ in }, minimize: { _ in }, fullscreen: { _ in }))
                 .frame(width: panelSize.width, height: panelSize.height)
-                .background(RoundedRectangle(cornerRadius: Layout.corner, style: .continuous)
-                    .fill(scheme == .dark ? Color(white: 0.16, opacity: 0.92) : Color(white: 0.96, opacity: 0.92)))
+                .background {
+                    // The liquid panel draws its own glass; a second fill would poke out at its corners.
+                    if !settings.liquidGlass {
+                        RoundedRectangle(cornerRadius: Layout.corner, style: .continuous)
+                            .fill(scheme == .dark ? Color(white: 0.16, opacity: 0.92) : Color(white: 0.96, opacity: 0.92))
+                    }
+                }
                 .environment(\.colorScheme, scheme)
                 .scaleEffect(fitScale)
                 .frame(width: panelSize.width * fitScale, height: panelSize.height * fitScale)

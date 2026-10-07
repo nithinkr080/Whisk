@@ -39,7 +39,7 @@
   .nav { position: fixed; top: 14px; left: 50%; translate: -50% 0; z-index: 50; display: flex; align-items: center; gap: 22px; padding: 8px 10px 8px 16px;
     border-radius: 999px; border: 1px solid var(--line); background: rgba(14,16,26,.55); backdrop-filter: blur(18px) saturate(1.6); -webkit-backdrop-filter: blur(18px) saturate(1.6);
     box-shadow: 0 10px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08); transition: background .3s, border-color .3s; width: max-content; max-width: calc(100% - 24px); }
-  .nav.scrolled { background: rgba(10,12,20,.8); border-color: rgba(255,255,255,.14); }
+  .nav.scrolled { background: linear-gradient(140deg, rgba(48,56,90,.5), rgba(12,14,24,.62)); }
   .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 16px; color: var(--fg); }
   .brand img { width: 24px; height: 24px; border-radius: 6px; }
   .brand:hover { text-decoration: none; }
@@ -49,7 +49,7 @@
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 14px 24px; border-radius: 14px; font-weight: 600; font-size: 16px; color: var(--fg);
     border: 1px solid var(--line); background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: transform .2s, box-shadow .2s, background .2s; }
   .btn:hover { text-decoration: none; transform: translateY(-2px); background: rgba(255,255,255,.09); }
-  .btn.primary { color: #fff; border-color: transparent; background: var(--grad); background-origin: border-box; background-clip: border-box; box-shadow: 0 10px 34px -8px rgba(122,100,255,.7); }
+  .btn.primary { color: #fff; border-color: transparent; background: var(--grad); background-origin: border-box; background-clip: border-box; box-shadow: 0 10px 34px -8px rgba(122,100,255,.7), inset 0 1px 0 rgba(255,255,255,.5), inset 0 -10px 18px rgba(40,20,120,.18); }
   .btn.primary:hover { box-shadow: 0 16px 44px -8px rgba(122,100,255,.9); }
   .nav .btn { padding: 8px 16px; font-size: 14px; border-radius: 999px; }
 
@@ -149,9 +149,6 @@
   .center { text-align: center; } .center .sub { margin-left: auto; margin-right: auto; }
   .bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; margin-top: 50px; }
   .card { position: relative; overflow: hidden; border-radius: 24px; padding: 28px; border: 1px solid var(--line); background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-  .card::before { content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity .35s; pointer-events: none;
-    background: radial-gradient(420px circle at var(--cx, 50%) var(--cy, 50%), rgba(127,170,255,.18), transparent 60%); }
-  .card:hover::before { opacity: 1; }
   .card h3 { margin: 18px 0 6px; font-size: 20px; letter-spacing: -.01em; }
   .card p { margin: 0; color: var(--muted); font-size: 15.5px; }
   .ic { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 22px; color: #fff; background: var(--grad); box-shadow: 0 8px 20px -6px rgba(122,100,255,.7); }
@@ -212,9 +209,61 @@
   footer { padding: 30px 0 52px; text-align: center; color: var(--dim); font-size: 14px; background: var(--bg-2); border-top: 1px solid var(--line); }
   footer a { color: var(--muted); text-decoration: underline; }
 
+
+  /* ---------- liquid glass ---------- */
+  :is(.nav, .btn, .pill, .card, .krow, .step, details, .chip) {
+    background: linear-gradient(140deg, rgba(255,255,255,.13), rgba(255,255,255,.035) 48%, rgba(255,255,255,.075));
+    -webkit-backdrop-filter: blur(22px) saturate(1.9) brightness(1.06); backdrop-filter: blur(22px) saturate(1.9) brightness(1.06);
+    border-color: rgba(255,255,255,.07);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(255,255,255,.05), inset 0 0 26px rgba(255,255,255,.03), 0 20px 50px -22px rgba(0,0,0,.65);
+  }
+  .btn, .pill, .krow, details { position: relative; }
+  .btn:not(.primary):hover { background: linear-gradient(140deg, rgba(255,255,255,.2), rgba(255,255,255,.06) 48%, rgba(255,255,255,.12)); }
+  /* specular rim: a bright edge that fades around the glass */
+  :is(.nav, .btn, .pill, .card, .krow, details, .chip)::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+    background: linear-gradient(140deg, rgba(255,255,255,.62), rgba(255,255,255,.08) 30%, rgba(255,255,255,.04) 68%, rgba(255,255,255,.42));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  /* sheen that follows the pointer */
+  :is(.nav, .btn, .pill, .card, .krow, .step, details, .chip)::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .35s;
+    background: radial-gradient(260px circle at var(--cx, 50%) var(--cy, 0%), rgba(255,255,255,.2), transparent 62%); }
+  :is(.nav, .btn, .pill, .card, .krow, .step, details, .chip):hover::after { opacity: 1; }
+  .btn.primary::after { opacity: 1; background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0) 52%); }
+  .float .glass-chip { border-color: rgba(255,255,255,.34); background: linear-gradient(140deg, rgba(255,255,255,.18), rgba(255,255,255,.04));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 18px 40px -14px rgba(0,0,0,.5); -webkit-backdrop-filter: blur(10px) saturate(1.6); backdrop-filter: blur(10px) saturate(1.6); }
+
+  /* ambient colour behind the glass, drifting at its own speed */
+  section.block { position: relative; isolation: isolate; overflow-x: clip; }
+  .amb { position: absolute; inset: -80px 0; z-index: -1; pointer-events: none; }
+  .amb .blob { filter: none; }
+  .k1 { background: radial-gradient(circle, rgba(70,110,255,.5), transparent 66%); }
+  .k2 { background: radial-gradient(circle, rgba(255,122,89,.38), transparent 66%); }
+  .k3 { background: radial-gradient(circle, rgba(154,100,255,.46), transparent 66%); }
+  .k4 { background: radial-gradient(circle, rgba(60,220,200,.3), transparent 66%); }
+  .amb .blob { opacity: 1; width: 560px; height: 560px; }
+
+  /* glass orbs */
+  .orb { position: absolute; z-index: 0; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle at 30% 26%, rgba(255,255,255,.95), rgba(255,255,255,.28) 16%, rgba(150,175,255,.16) 46%, rgba(120,90,255,.1) 72%);
+    box-shadow: inset -8px -10px 22px rgba(80,60,200,.38), inset 6px 8px 14px rgba(255,255,255,.3), 0 24px 44px -6px rgba(60,40,160,.5);
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+  .o1 { width: 58px; height: 58px; left: 19%; top: 13%; } .o2 { width: 92px; height: 92px; right: 17%; top: 46%; }
+  .o3 { width: 32px; height: 32px; left: 4%; top: 46%; } .o4 { width: 44px; height: 44px; right: 5%; top: 83%; } .o5 { width: 70px; height: 70px; left: 14%; top: 86%; }
+
+  /* depth on pointer and on scroll */
+  .tilt { transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .4s cubic-bezier(.2,.8,.2,1); will-change: transform; }
+  .story .stage { transform: perspective(1400px) rotateY(calc((var(--p, .5) - .5) * -12deg)) rotateX(calc((var(--p, .5) - .5) * 5deg)); will-change: transform; }
+  .story .stage::before { translate: calc(var(--p, 0) * 150px) calc(var(--p, 0) * 90px); }
+  .story .stage::after { translate: calc(var(--p, 0) * -130px) calc(var(--p, 0) * -80px); }
+  .cursor-glow { position: fixed; left: 0; top: 0; width: 460px; height: 460px; margin: -230px 0 0 -230px; border-radius: 50%; pointer-events: none; z-index: 1; opacity: 0; will-change: transform;
+    background: radial-gradient(circle, rgba(127,170,255,.2), rgba(154,115,255,.1) 40%, transparent 68%); mix-blend-mode: screen; transition: opacity .5s; }
+
   @media (max-width: 900px) {
     .nav .links a:not(.btn) { display: none; } .nav { gap: 12px; }
-    .float { display: none; } .hero { padding-top: 120px; }
+    .float, .orb, .cursor-glow { display: none; } .hero { padding-top: 120px; }
+    :is(.nav, .btn, .pill, .card, .krow, .step, details, .chip) { -webkit-backdrop-filter: blur(14px) saturate(1.6); backdrop-filter: blur(14px) saturate(1.6); }
+    .amb .blob { width: 360px; height: 360px; } .story .stage { transform: none; }
     .stage { --w: 92px; --gap: 8px; padding: 46px 8px; } .panel { padding: 12px; border-radius: 22px; }
     .t { font-size: 11px; } .app { width: 20px; height: 20px; border-radius: 6px; left: 5px; bottom: 5px; }
     .sel { top: -7px; left: -7px; width: calc(var(--w) + 14px); height: calc(var(--w) * .62 + 46px); border-radius: 16px; }
@@ -226,15 +275,23 @@
     .liquid, .steps, .keys { grid-template-columns: 1fr; } .chip.c1 { left: 6px; top: -22px; } .chip.c2 { right: 6px; bottom: -22px; }
     section.block { padding-top: 90px; } .final { margin-top: 90px; padding: 90px 20px; }
   }
+  @media (max-width: 520px) {
+    .stage, .story .stage { --w: 74px; --gap: 6px; padding: 38px 6px; } .panel { padding: 9px; border-radius: 18px; }
+    .t { font-size: 10px; } .win { border-radius: 10px; }
+    .sel { top: -6px; left: -6px; width: calc(var(--w) + 12px); height: calc(var(--w) * .62 + 40px); border-radius: 13px; }
+    .keys-live { top: 10px; }
+  }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; } .auto .sel, .auto .tile, .slider-mock .thumb { animation: none; }
     [data-speed], [data-depth] { translate: none; } .js .reveal { opacity: 1; transform: none; transition: none; }
     .story .sel, .story .tile, .narr li { transition: none; }
+    .tilt, .story .stage { transform: none; } .story .stage::before, .story .stage::after { translate: none; } .cursor-glow { display: none; }
   }
 </style>
 </head>
 <body>
 <div class="progress" id="progress"></div>
+<div class="cursor-glow" id="glow" aria-hidden="true"></div>
 
 <nav class="nav" id="nav">
   <a class="brand" href="#top"><img src="icon.png" alt="">Whisk</a>
@@ -255,6 +312,8 @@
   <div class="float f3" data-speed="-0.34" data-depth="38"><div class="glass-chip"></div><div class="win w3"><i></i><i></i><i></i><span class="app a3"></span></div></div>
   <div class="float f4" data-speed="-0.18" data-depth="20"><div class="glass-chip"></div><div class="win w4"><i></i><i></i><i></i><span class="app a4"></span></div></div>
 
+  <span class="orb o1" data-speed="-0.5" data-depth="52"></span><span class="orb o2" data-speed="-0.62" data-depth="64"></span><span class="orb o3" data-speed="-0.28" data-depth="30"></span><span class="orb o4" data-speed="-0.42" data-depth="44"></span><span class="orb o5" data-speed="-0.7" data-depth="58"></span>
+
   <div class="wrap" data-speed="0.06">
     <span class="pill reveal"><i></i>Free &amp; open source · macOS 14+</span>
     <h1 class="reveal" style="--d:.08s">Switch windows <span class="grad">at the speed of thought.</span></h1>
@@ -265,7 +324,7 @@
     </div>
     <p class="fine reveal" style="--d:.3s">Universal app for Apple Silicon and Intel · MIT licensed</p>
 
-    <div data-speed="-0.04">
+    <div class="tilt" data-tilt="5" data-speed="-0.04">
       <div class="stage auto reveal" style="--d:.36s" aria-label="Animated demo of the Whisk switcher">
         <div class="panel"><div class="row">
           <div class="sel"></div>
@@ -307,27 +366,29 @@
 </section>
 
 <section class="block" id="features">
+  <div class="amb" aria-hidden="true"><span class="blob k1" data-speed="0.12" style="left:-14%;top:6%"></span><span class="blob k2" data-speed="-0.1" style="right:-16%;top:38%"></span><span class="blob k3" data-speed="0.2" style="left:30%;bottom:-6%"></span></div>
   <div class="wrap center">
-    <p class="eyebrow reveal">Features</p>
-    <h2 class="reveal" style="--d:.06s">Everything a window switcher<br>should <span class="grad">do.</span></h2>
-    <p class="sub reveal" style="--d:.12s">Fast, native, and built to get out of your way.</p>
+    <p class="eyebrow reveal" data-speed="0.05">Features</p>
+    <h2 class="reveal" data-speed="0.03" style="--d:.06s">Everything a window switcher<br>should <span class="grad">do.</span></h2>
+    <p class="sub reveal" data-speed="0.015" style="--d:.12s">Fast, native, and built to get out of your way.</p>
     <div class="bento" style="text-align:left">
       <div class="card c-a reveal" data-speed="0.02"><div class="ic">▦</div><h3>Across Spaces &amp; fullscreen</h3><p>Pick a window in a fullscreen app or on another desktop and Whisk takes you there, with the normal Space animation.</p>
         <div class="mini-spaces"><span data-n="1"></span><span data-n="2" class="fs"></span><span data-n="3"></span></div></div>
-      <div class="card c-b reveal" style="--d:.08s"><div class="ic">◉</div><h3>Live previews</h3><p>See what is in every window before you jump, including minimized ones.</p></div>
-      <div class="card c-c reveal"><div class="ic">⌨︎</div><h3>Keyboard first</h3><p>Quit, close, minimize or hide straight from the switcher with <kbd>Q</kbd><kbd>W</kbd><kbd>M</kbd><kbd>H</kbd>.</p></div>
-      <div class="card c-d reveal" style="--d:.08s"><div class="ic">☰</div><h3>Smart filters</h3><p>Pick which windows show up, per screen, and keep chosen apps out.</p></div>
-      <div class="card c-e reveal" style="--d:.16s"><div class="ic">🔒</div><h3>Private by design</h3><p>No network, no accounts, no analytics. Previews live in memory only.</p></div>
+      <div class="card c-b reveal" data-speed="0.05" style="--d:.08s"><div class="ic">◉</div><h3>Live previews</h3><p>See what is in every window before you jump, including minimized ones.</p></div>
+      <div class="card c-c reveal" data-speed="-0.03"><div class="ic">⌨︎</div><h3>Keyboard first</h3><p>Quit, close, minimize or hide straight from the switcher with <kbd>Q</kbd><kbd>W</kbd><kbd>M</kbd><kbd>H</kbd>.</p></div>
+      <div class="card c-d reveal" data-speed="0.04" style="--d:.08s"><div class="ic">☰</div><h3>Smart filters</h3><p>Pick which windows show up, per screen, and keep chosen apps out.</p></div>
+      <div class="card c-e reveal" data-speed="-0.05" style="--d:.16s"><div class="ic">🔒</div><h3>Private by design</h3><p>No network, no accounts, no analytics. Previews live in memory only.</p></div>
     </div>
   </div>
 </section>
 
 <section class="block" id="liquid">
+  <div class="amb" aria-hidden="true"><span class="blob k4" data-speed="0.14" style="left:-12%;top:8%"></span><span class="blob k3" data-speed="-0.12" style="right:-10%;top:20%"></span><span class="blob k2" data-speed="0.18" style="left:42%;bottom:-14%"></span></div>
   <div class="wrap liquid">
     <div>
-      <p class="eyebrow reveal">Experimental</p>
-      <h2 class="reveal" style="--d:.06s">Liquid Glass,<br><span class="grad">tuned by you.</span></h2>
-      <p class="sub reveal" style="--d:.12s">On macOS 26 and later, Whisk can render its panel as real Liquid Glass. The selection stretches and settles like a drop of water as you move between windows.</p>
+      <p class="eyebrow reveal" data-speed="0.05">Experimental</p>
+      <h2 class="reveal" data-speed="0.03" style="--d:.06s">Liquid Glass,<br><span class="grad">tuned by you.</span></h2>
+      <p class="sub reveal" data-speed="0.015" style="--d:.12s">On macOS 26 and later, Whisk can render its panel as real Liquid Glass. The selection stretches and settles like a drop of water as you move between windows.</p>
       <ul class="ticks reveal" style="--d:.18s">
         <li><b>Clear ↔ Frosted slider</b> to choose how see-through the glass is.</li>
         <li><b>Smooth at 120 fps</b> on ProMotion displays.</li>
@@ -336,38 +397,40 @@
     </div>
     <div class="shot-wrap reveal" style="--d:.1s">
       <div class="chip c1" data-speed="-0.12"><div class="slider-mock"><span>Clear</span><span class="track"><span class="thumb"></span></span><span>Frosted</span></div></div>
-      <div class="shot-frame"><img src="liquid-glass.jpg" alt="Whisk's Liquid Glass switcher" loading="lazy" data-speed="-0.06" id="shotImg"></div>
+      <div class="shot-frame tilt" data-tilt="7"><img src="liquid-glass.jpg" alt="Whisk's Liquid Glass switcher" loading="lazy" data-speed="-0.06" id="shotImg"></div>
       <div class="chip c2" data-speed="0.14">✦ Liquid Glass · macOS 26+</div>
     </div>
   </div>
 </section>
 
 <section class="block" id="shortcuts">
+  <div class="amb" aria-hidden="true"><span class="blob k3" data-speed="0.14" style="right:-14%;top:2%"></span><span class="blob k1" data-speed="-0.1" style="left:-14%;top:34%"></span></div>
   <div class="wrap center">
-    <p class="eyebrow reveal">Shortcuts</p>
-    <h2 class="reveal" style="--d:.06s">Shortcuts you <span class="grad">already know.</span></h2>
-    <p class="sub reveal" style="--d:.12s">Hold <kbd>⌥</kbd> and tap Tab. Release to switch. A quick tap jumps to your previous window.</p>
+    <p class="eyebrow reveal" data-speed="0.05">Shortcuts</p>
+    <h2 class="reveal" data-speed="0.03" style="--d:.06s">Shortcuts you <span class="grad">already know.</span></h2>
+    <p class="sub reveal" data-speed="0.015" style="--d:.12s">Hold <kbd>⌥</kbd> and tap Tab. Release to switch. A quick tap jumps to your previous window.</p>
     <div class="keys" style="text-align:left">
-      <div class="krow reveal"><span>Switch between all windows</span><span><kbd>⌥</kbd><kbd>Tab</kbd></span></div>
-      <div class="krow reveal" style="--d:.05s"><span>Go backwards</span><span><kbd>⌥</kbd><kbd>⇧</kbd><kbd>Tab</kbd></span></div>
-      <div class="krow reveal"><span>Windows of the current app</span><span><kbd>⌥</kbd><kbd>`</kbd></span></div>
-      <div class="krow reveal" style="--d:.05s"><span>Move the selection</span><span><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd></span></div>
-      <div class="krow reveal"><span>Quit · Close · Minimize · Hide</span><span><kbd>Q</kbd><kbd>W</kbd><kbd>M</kbd><kbd>H</kbd></span></div>
-      <div class="krow reveal" style="--d:.05s"><span>Cancel</span><span><kbd>esc</kbd></span></div>
+      <div class="krow reveal" data-speed="0.02"><span>Switch between all windows</span><span><kbd>⌥</kbd><kbd>Tab</kbd></span></div>
+      <div class="krow reveal" data-speed="-0.02" style="--d:.05s"><span>Go backwards</span><span><kbd>⌥</kbd><kbd>⇧</kbd><kbd>Tab</kbd></span></div>
+      <div class="krow reveal" data-speed="0.02"><span>Windows of the current app</span><span><kbd>⌥</kbd><kbd>`</kbd></span></div>
+      <div class="krow reveal" data-speed="-0.02" style="--d:.05s"><span>Move the selection</span><span><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd></span></div>
+      <div class="krow reveal" data-speed="0.02"><span>Quit · Close · Minimize · Hide</span><span><kbd>Q</kbd><kbd>W</kbd><kbd>M</kbd><kbd>H</kbd></span></div>
+      <div class="krow reveal" data-speed="-0.02" style="--d:.05s"><span>Cancel</span><span><kbd>esc</kbd></span></div>
     </div>
     <p class="note-keys">The hold key can be changed to <kbd>⌃</kbd> or <kbd>⌘</kbd> in Preferences.</p>
   </div>
 </section>
 
 <section class="block" id="install">
+  <div class="amb" aria-hidden="true"><span class="blob k2" data-speed="0.12" style="left:-10%;top:4%"></span><span class="blob k1" data-speed="-0.14" style="right:-12%;top:30%"></span><span class="blob k4" data-speed="0.2" style="left:34%;bottom:-12%"></span></div>
   <div class="wrap center">
-    <p class="eyebrow reveal">Install</p>
-    <h2 class="reveal" style="--d:.06s">Up and running in <span class="grad">a minute.</span></h2>
-    <p class="sub reveal" style="--d:.12s">Whisk is not notarized by Apple (that needs a paid developer account), so macOS asks you to confirm the first launch.</p>
+    <p class="eyebrow reveal" data-speed="0.05">Install</p>
+    <h2 class="reveal" data-speed="0.03" style="--d:.06s">Up and running in <span class="grad">a minute.</span></h2>
+    <p class="sub reveal" data-speed="0.015" style="--d:.12s">Whisk is not notarized by Apple (that needs a paid developer account), so macOS asks you to confirm the first launch.</p>
     <div class="steps" style="text-align:left">
-      <div class="step reveal"><h3>Download</h3><p>Get the latest <b>.dmg</b> from the <a href="https://github.com/nithinkr080/Whisk/releases/latest">Releases page</a> and drag Whisk to Applications.</p></div>
-      <div class="step reveal" style="--d:.08s"><h3>Open it once</h3><p>Right-click Whisk → <b>Open</b> → <b>Open</b>. Or run the command below in Terminal.</p></div>
-      <div class="step reveal" style="--d:.16s"><h3>Grant two permissions</h3><p><b>Accessibility</b> (to detect the shortcut and raise windows) and <b>Screen Recording</b> (for previews).</p></div>
+      <div class="step reveal" data-speed="0.02"><h3>Download</h3><p>Get the latest <b>.dmg</b> from the <a href="https://github.com/nithinkr080/Whisk/releases/latest">Releases page</a> and drag Whisk to Applications.</p></div>
+      <div class="step reveal" data-speed="0.05" style="--d:.08s"><h3>Open it once</h3><p>Right-click Whisk → <b>Open</b> → <b>Open</b>. Or run the command below in Terminal.</p></div>
+      <div class="step reveal" data-speed="0.08" style="--d:.16s"><h3>Grant two permissions</h3><p><b>Accessibility</b> (to detect the shortcut and raise windows) and <b>Screen Recording</b> (for previews).</p></div>
     </div>
     <div class="code reveal" id="cmd">xattr -dr com.apple.quarantine /Applications/Whisk.app<button type="button" onclick="copyCmd(this)">Copy</button></div>
     <p class="caption">Prefer building it yourself? <code>git clone https://github.com/nithinkr080/Whisk.git &amp;&amp; cd Whisk &amp;&amp; ./build.sh</code></p>
@@ -375,9 +438,10 @@
 </section>
 
 <section class="block" id="faq">
+  <div class="amb" aria-hidden="true"><span class="blob k3" data-speed="0.14" style="left:-12%;top:10%"></span><span class="blob k1" data-speed="-0.12" style="right:-14%;top:44%"></span></div>
   <div class="wrap center">
-    <p class="eyebrow reveal">FAQ</p>
-    <h2 class="reveal" style="--d:.06s">Questions, <span class="grad">answered.</span></h2>
+    <p class="eyebrow reveal" data-speed="0.05">FAQ</p>
+    <h2 class="reveal" data-speed="0.03" style="--d:.06s">Questions, <span class="grad">answered.</span></h2>
     <div style="margin-top:40px;text-align:left">
       <details class="reveal"><summary>Is Whisk really free?</summary><p>Yes. It is MIT licensed and open source. Every feature is included: there is no paid tier, trial or subscription.</p></details>
       <details class="reveal"><summary>Why does macOS say it can't be opened?</summary><p>Notarizing an app with Apple costs $99 a year, so Whisk is only signed ad hoc. Right-click → Open once, or run the <code>xattr</code> command above. You can also read and build the source yourself.</p></details>
@@ -392,6 +456,7 @@
 
 <div class="final">
   <span class="blob b1" data-speed="0.08"></span><span class="blob b2" data-speed="0.18"></span><span class="blob b3" data-speed="0.3"></span>
+  <span class="orb o1" style="left:16%;top:22%" data-speed="-0.4"></span><span class="orb o2" style="right:14%;top:52%;left:auto" data-speed="-0.55"></span>
   <h2 class="reveal">Meet your windows <span class="grad">again.</span></h2>
   <div class="cta reveal" style="--d:.1s">
     <a class="btn primary" href="https://github.com/nithinkr080/Whisk/releases/latest">⬇︎ Download for Mac</a>
@@ -481,12 +546,34 @@
     hero.addEventListener('pointerleave', function () { depth.forEach(function (el) { el.style.setProperty('--mx', '0px'); el.style.setProperty('--my', '0px'); }); });
   }
 
-  /* spotlight on cards */
-  [].slice.call(document.querySelectorAll('.card')).forEach(function (c) {
+  /* pointer-following sheen on every glass surface */
+  [].slice.call(document.querySelectorAll('.nav, .btn, .pill, .card, .krow, .step, details, .chip')).forEach(function (c) {
     c.addEventListener('pointermove', function (e) {
       var r = c.getBoundingClientRect(); c.style.setProperty('--cx', (e.clientX - r.left) + 'px'); c.style.setProperty('--cy', (e.clientY - r.top) + 'px');
     });
   });
+
+  /* 3D tilt toward the pointer */
+  if (fine && !reduce) {
+    [].slice.call(document.querySelectorAll('[data-tilt]')).forEach(function (el) {
+      var k = +el.dataset.tilt;
+      el.addEventListener('pointermove', function (e) {
+        var r = el.getBoundingClientRect(), nx = (e.clientX - r.left) / r.width - .5, ny = (e.clientY - r.top) / r.height - .5;
+        el.style.setProperty('--ry', (nx * k).toFixed(2) + 'deg'); el.style.setProperty('--rx', (-ny * k).toFixed(2) + 'deg');
+      });
+      el.addEventListener('pointerleave', function () { el.style.setProperty('--ry', '0deg'); el.style.setProperty('--rx', '0deg'); });
+    });
+
+    /* a soft light that trails the cursor */
+    var glow = document.getElementById('glow'), gx = innerWidth / 2, gy = innerHeight / 2, tx = gx, ty = gy, raf = 0;
+    function drift() {
+      gx += (tx - gx) * .12; gy += (ty - gy) * .12;
+      glow.style.transform = 'translate3d(' + gx.toFixed(1) + 'px,' + gy.toFixed(1) + 'px,0)';
+      raf = (Math.abs(tx - gx) + Math.abs(ty - gy) > .5) ? requestAnimationFrame(drift) : 0;
+    }
+    addEventListener('pointermove', function (e) { tx = e.clientX; ty = e.clientY; glow.style.opacity = 1; if (!raf) raf = requestAnimationFrame(drift); }, { passive: true });
+    document.addEventListener('pointerleave', function () { glow.style.opacity = 0; });
+  }
 })();
 
 function copyCmd(btn) {

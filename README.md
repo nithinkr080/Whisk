@@ -26,7 +26,18 @@ The Liquid Glass selection moving between windows:
 
 ## Install
 
-There are no prebuilt releases yet, so build it yourself. You need Xcode (or the Xcode command line tools) with a macOS 14+ SDK:
+### Download (easiest)
+
+Grab **Whisk-x.y.z.dmg** (or the `.zip`) from the [Releases page](https://github.com/nithinkr080/Whisk/releases/latest), open it, and drag **Whisk** into **Applications**. It runs on both Apple Silicon and Intel Macs (macOS 14+).
+
+Whisk is not notarized by Apple (that needs a paid developer account), so macOS will refuse to open it the first time. Do one of these once:
+
+- Right-click **Whisk** in Applications → **Open** → **Open**, or
+- run `xattr -dr com.apple.quarantine /Applications/Whisk.app` in Terminal.
+
+### Build from source
+
+You need Xcode (or the Xcode command line tools) with a macOS 14+ SDK:
 
 ```bash
 git clone https://github.com/nithinkr080/Whisk.git
@@ -35,13 +46,9 @@ cd Whisk
 open build/Whisk.app
 ```
 
-Optionally copy it to `/Applications` (needed for "Launch at login" to stick):
+`Scripts/package_release.sh <version>` builds a universal app and produces the `.zip` and `.dmg` that are attached to releases.
 
-```bash
-cp -R build/Whisk.app /Applications/
-```
-
-Whisk lives in the menu bar and has no Dock icon. Open **Preferences** from the menu bar icon.
+Whisk lives in the menu bar and has no Dock icon. Open **Preferences** from the menu bar icon. Copy it to `/Applications` if you want "Launch at login" to stick.
 
 ### Permissions
 

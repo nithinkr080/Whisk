@@ -4,8 +4,11 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 APP="build/Whisk.app"
-swift build -c release
-BIN="$(swift build -c release --show-bin-path)/Whisk"
+# UNIVERSAL=1 ./build.sh builds a binary for both Apple Silicon and Intel Macs (used for releases).
+ARCH_FLAGS=()
+if [ "${UNIVERSAL:-0}" = "1" ]; then ARCH_FLAGS=(--arch arm64 --arch x86_64); fi
+swift build -c release ${ARCH_FLAGS[@]+"${ARCH_FLAGS[@]}"}
+BIN="$(swift build -c release ${ARCH_FLAGS[@]+"${ARCH_FLAGS[@]}"} --show-bin-path)/Whisk"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"

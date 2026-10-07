@@ -30,6 +30,7 @@ final class SwitcherController {
     private(set) var isActive = false
     private var panelVisible = false
     private var showTimer: Timer?
+    private var watchdog: Timer?
     private var mouseAtShow = NSEvent.mouseLocation
 
     private let backdrop = NSVisualEffectView()
@@ -81,16 +82,39 @@ final class SwitcherController {
         model.windows = list
         model.selected = list.count > 1 ? (reverse ? list.count - 1 : 1) : 0
         isActive = true
+        debugLog("begin: \(list.count) windows")
 
         let delay = Settings.shared.showDelay
         if delay <= 0 {
             showPanel()
         } else {
-            showTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+            // .common modes so the delay still fires while a menu or other tracking loop is running.
+            let timer = Timer(timeInterval: delay, repeats: false) { [weak self] _ in
                 MainActor.assumeIsolated { self?.showPanel() }
             }
+            RunLoop.main.add(timer, forMode: .common)
+            showTimer = timer
         }
+        startWatchdog()
         return true
+    }
+
+    /// If the key-up for the trigger modifier is ever lost (event tap hiccup, secure input), don't leave the
+    /// session stuck open swallowing keys: notice the modifier is no longer held and finish the switch.
+    private func startWatchdog() {
+        watchdog?.invalidate()
+        let timer = Timer(timeInterval: 0.3, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.isActive else { return }
+                let held = CGEventSource.flagsState(.combinedSessionState)
+                if !held.contains(Settings.shared.triggerModifier.flag) {
+                    debugLog("watchdog: trigger modifier no longer held, committing")
+                    self.commit()
+                }
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        watchdog = timer
     }
 
     func commit() {
@@ -105,6 +129,8 @@ final class SwitcherController {
     private func end() {
         showTimer?.invalidate()
         showTimer = nil
+        watchdog?.invalidate()
+        watchdog = nil
         panel.orderOut(nil)
         panelVisible = false
         isActive = false
@@ -118,13 +144,13 @@ final class SwitcherController {
         guard isActive, !model.windows.isEmpty else { return }
         let n = model.windows.count
         model.selected = ((model.selected + delta) % n + n) % n
-        if !panelVisible { showPanel() }
+        showPanel()
     }
 
     func moveVertically(_ rows: Int) {
         guard isActive, !model.windows.isEmpty else { return }
         model.moveVertically(rows)
-        if !panelVisible { showPanel() }
+        showPanel()
     }
 
     private func hovered(_ index: Int) {
@@ -189,20 +215,45 @@ final class SwitcherController {
     // MARK: Panel
 
     private func showPanel(loadThumbnails: Bool = true) {
-        guard isActive, !panelVisible else { return }
+        guard isActive else { return }
+        // Already up? Only skip when the window server really has it on screen; otherwise bring it back.
+        if panelVisible, panel.isVisible { return }
         panel.appearance = Settings.shared.theme.appearance
         backdrop.isHidden = Settings.shared.liquidGlass   // Liquid Glass draws its own backdrop
         mouseAtShow = NSEvent.mouseLocation
         layoutPanel()
         panel.orderFrontRegardless()
         panelVisible = true
+        debugLog("panel shown on \(targetScreen.localizedName)")
+        verifyPanelOnScreen()
         guard loadThumbnails, !PerfFlags.noThumbCapture else { return }
-        let backing = NSScreen.main?.backingScaleFactor ?? 2
+        let backing = targetScreen.backingScaleFactor
         ThumbnailService.shared.apply(to: model.windows, pixelHeight: Settings.shared.tileSize.thumbHeight * model.scale * backing)
     }
 
+    /// The screen the pointer is on: that is where the user is looking (NSScreen.main follows the key window,
+    /// which for a background utility can be a different display).
+    private var targetScreen: NSScreen {
+        let p = NSEvent.mouseLocation
+        return NSScreen.screens.first { NSMouseInRect(p, $0.frame, false) } ?? NSScreen.main ?? NSScreen.screens[0]
+    }
+
+    /// Shortly after showing, confirm the panel is really visible; macOS occasionally drops an ordered-front
+    /// window (Space changes, display wake). If it did, put it back.
+    private func verifyPanelOnScreen(attempt: Int = 0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
+            guard let self, self.isActive else { return }
+            if !self.panel.isVisible || !self.panel.occlusionState.contains(.visible) {
+                debugLog("panel not visible after show (attempt \(attempt)), re-ordering front")
+                self.layoutPanel()
+                self.panel.orderFrontRegardless()
+                if attempt < 3 { self.verifyPanelOnScreen(attempt: attempt + 1) }
+            }
+        }
+    }
+
     private func layoutPanel() {
-        let screen = NSScreen.main ?? NSScreen.screens.first!
+        let screen = targetScreen
         let visible = screen.visibleFrame
         let size = model.layout(maxWidth: visible.width * 0.92, maxHeight: visible.height * 0.85)
         let frame = NSRect(x: visible.midX - size.width / 2, y: visible.midY - size.height / 2,

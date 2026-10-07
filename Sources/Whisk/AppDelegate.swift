@@ -11,8 +11,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var permissionsWindow: NSWindow?
     private var pollTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
+    private var activity: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // A menu-bar utility with no windows is a prime App Nap candidate; napping delays timers and redraws,
+        // which makes the switcher panel show up late or not at all after the app has been idle.
+        activity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiatedAllowingIdleSystemSleep, .latencyCritical, .automaticTerminationDisabled, .suddenTerminationDisabled],
+            reason: "Whisk listens for the window-switching shortcut")
         permissions.refresh()
         if !permissions.allGranted { showPermissions() }
 

@@ -259,6 +259,32 @@
   .cursor-glow { position: fixed; left: 0; top: 0; width: 460px; height: 460px; margin: -230px 0 0 -230px; border-radius: 50%; pointer-events: none; z-index: 1; opacity: 0; will-change: transform;
     background: radial-gradient(circle, rgba(127,170,255,.2), rgba(154,115,255,.1) 40%, transparent 68%); mix-blend-mode: screen; transition: opacity .5s; }
 
+
+  /* first-launch guide */
+  .guide { display: grid; grid-template-columns: 1fr 1.15fr; gap: 36px; align-items: center; margin-top: 54px; text-align: left; }
+  .guide h3.gt { font-size: 22px; letter-spacing: -.01em; margin: 0 0 4px; }
+  .gk { position: relative; max-width: 360px; margin: 0 auto; padding: 26px 24px 22px; border-radius: 26px; color: #f2f2f4;
+    background: linear-gradient(160deg, rgba(86,86,92,.85), rgba(50,50,55,.9)); border: 1px solid rgba(255,255,255,.16);
+    box-shadow: 0 40px 80px -30px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.22); }
+  .gk-ic { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 15px; font-size: 30px; margin-bottom: 14px;
+    background: linear-gradient(#e9e9ec, #b9b9c0); color: #f5b800; box-shadow: 0 6px 16px rgba(0,0,0,.35); }
+  .gk-t { font-weight: 700; font-size: 17px; margin: 0 0 8px; }
+  .gk-p { font-size: 14px; line-height: 1.45; color: rgba(255,255,255,.78); margin: 0 0 20px; }
+  .gk-b { display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px; }
+  .gk-b span { display: block; text-align: center; padding: 10px 8px; border-radius: 999px; font-weight: 600; font-size: 14px; background: rgba(255,255,255,.14); }
+  .gk-b .done { outline: 2px solid var(--cyan); outline-offset: 3px; background: rgba(255,255,255,.2); animation: ring 2.2s ease-in-out infinite; }
+  .gk-b .bin { background: rgba(100,170,80,.55); color: rgba(255,255,255,.65); position: relative; }
+  .gk-b .bin::after { content: "Don\2019t click"; position: absolute; left: 50%; top: calc(100% + 8px); translate: -50% 0; white-space: nowrap; font-size: 11.5px; font-weight: 700; color: #ff8a7a; }
+  .gk-b .done::after { content: "Click this"; position: absolute; left: 50%; top: calc(100% + 8px); translate: -50% 0; white-space: nowrap; font-size: 11.5px; font-weight: 700; color: var(--cyan); }
+  .gk-b .done { position: relative; }
+  @keyframes ring { 50% { outline-color: rgba(127,214,255,.3); } }
+  .gsteps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: g; }
+  .gsteps li { position: relative; padding: 2px 0 2px 46px; color: var(--muted); counter-increment: g; }
+  .gsteps li::before { content: counter(g); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+    font-weight: 800; font-size: 14px; color: #fff; background: var(--grad); }
+  .gsteps b { color: var(--fg); }
+  .tip { margin-top: 18px; padding: 14px 18px; border-radius: 16px; font-size: 14.5px; color: var(--muted); border: 1px solid var(--line); background: var(--glass); }
+  .tip b { color: var(--fg); }
   @media (max-width: 900px) {
     .nav .links a:not(.btn) { display: none; } .nav { gap: 12px; }
     .float, .orb, .cursor-glow { display: none; } .hero { padding-top: 120px; }
@@ -272,7 +298,7 @@
     .story .stage { --w: 92px; order: -1; padding: 40px 8px; } .sub { font-size: 16px; margin-bottom: 18px; }
     .narr { gap: 10px; } .narr h3 { font-size: 17px; } .narr p { font-size: 14px; } .narr li:not(.on) p { display: none; }
     .bento { grid-template-columns: 1fr; } .c-a, .c-b, .c-c, .c-d, .c-e { grid-column: auto; }
-    .liquid, .steps, .keys { grid-template-columns: 1fr; } .chip.c1 { left: 6px; top: -22px; } .chip.c2 { right: 6px; bottom: -22px; }
+    .liquid, .steps, .keys, .guide { grid-template-columns: 1fr; } .chip.c1 { left: 6px; top: -22px; } .chip.c2 { right: 6px; bottom: -22px; }
     section.block { padding-top: 90px; } .final { margin-top: 90px; padding: 90px 20px; }
   }
   @media (max-width: 520px) {
@@ -426,11 +452,32 @@
   <div class="wrap center">
     <p class="eyebrow reveal" data-speed="0.05">Install</p>
     <h2 class="reveal" data-speed="0.03" style="--d:.06s">Up and running in <span class="grad">a minute.</span></h2>
-    <p class="sub reveal" data-speed="0.015" style="--d:.12s">Whisk is not notarized by Apple (that needs a paid developer account), so macOS asks you to confirm the first launch.</p>
+    <p class="sub reveal" data-speed="0.015" style="--d:.12s">Whisk is not notarized by Apple (that needs a paid developer account), so macOS asks you to confirm the first launch. Here is exactly what to expect.</p>
     <div class="steps" style="text-align:left">
       <div class="step reveal" data-speed="0.02"><h3>Download</h3><p>Get the latest <b>.dmg</b> from the <a href="https://github.com/nithinkr080/Whisk/releases/latest">Releases page</a> and drag Whisk to Applications.</p></div>
       <div class="step reveal" data-speed="0.05" style="--d:.08s"><h3>Open it once</h3><p>If macOS says it can't verify Whisk, press <b>Done</b>, then open <b>System Settings → Privacy &amp; Security</b> and click <b>Open Anyway</b>. Or run the command below in Terminal.</p></div>
       <div class="step reveal" data-speed="0.08" style="--d:.16s"><h3>Grant two permissions</h3><p><b>Accessibility</b> (to detect the shortcut and raise windows) and <b>Screen Recording</b> (for previews).</p></div>
+    </div>
+    <div class="guide">
+      <div class="gk reveal" aria-label="The macOS warning you will see on first launch">
+        <div class="gk-ic">&#9888;&#xFE0E;</div>
+        <p class="gk-t">&ldquo;Whisk&rdquo; Not Opened</p>
+        <p class="gk-p">Apple could not verify &ldquo;Whisk&rdquo; is free of malware that may harm your Mac or compromise your privacy.</p>
+        <div class="gk-b"><span class="done">Done</span><span class="bin">Move to Bin</span></div>
+        <div style="height:22px"></div>
+      </div>
+      <div class="reveal" style="--d:.1s">
+        <h3 class="gt">Seeing this warning? That&rsquo;s normal.</h3>
+        <p class="sub" style="font-size:16px;margin:0 0 20px">Every app that isn&rsquo;t notarized gets it the first time. Whisk is open source, so you can read the code and build it yourself.</p>
+        <ol class="gsteps">
+          <li><b>Click Done.</b> Not &ldquo;Move to Bin&rdquo;.</li>
+          <li>Open the Apple menu &rarr; <b>System Settings &rarr; Privacy &amp; Security</b>.</li>
+          <li>Scroll down to <b>Security</b>. You&rsquo;ll see &ldquo;Whisk was blocked&hellip;&rdquo;. Click <b>Open Anyway</b>.</li>
+          <li>Confirm with Touch ID or your password, then click <b>Open</b>.</li>
+          <li>Whisk asks for <b>Accessibility</b> and <b>Screen Recording</b>. Turn both on in the same Privacy &amp; Security screen, then reopen Whisk.</li>
+        </ol>
+        <p class="tip"><b>No &ldquo;Open Anyway&rdquo; button?</b> Try opening Whisk once more, then look again: macOS only shows it for about an hour after a blocked launch. <b>Says &ldquo;damaged&rdquo;?</b> Run the command below once in Terminal and open Whisk again.</p>
+      </div>
     </div>
     <div class="code reveal" id="cmd">xattr -dr com.apple.quarantine /Applications/Whisk.app<button type="button" onclick="copyCmd(this)">Copy</button></div>
     <p class="caption">Prefer building it yourself? <code>git clone https://github.com/nithinkr080/Whisk.git &amp;&amp; cd Whisk &amp;&amp; ./build.sh</code></p>

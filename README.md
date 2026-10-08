@@ -32,10 +32,29 @@ The Liquid Glass selection moving between windows:
 
 Grab **Whisk-x.y.z.dmg** (or the `.zip`) from the [Releases page](https://github.com/nithinkr080/Whisk/releases/latest), open it, and drag **Whisk** into **Applications**. It runs on both Apple Silicon and Intel Macs (macOS 14+).
 
-Whisk is not notarized by Apple (that needs a paid developer account), so macOS will refuse to open it the first time. Do one of these once:
+Whisk is not notarized by Apple (that needs a paid developer account), so macOS shows a warning the first time you open it:
 
-- press **Done** on the warning, then open **System Settings → Privacy & Security** and click **Open Anyway** (on older macOS: right-click **Whisk** → **Open** → **Open**), or
-- run `xattr -dr com.apple.quarantine /Applications/Whisk.app` in Terminal.
+> **"Whisk" Not Opened** — Apple could not verify "Whisk" is free of malware that may harm your Mac or compromise your privacy.
+
+This is expected for any app that isn't notarized. Whisk is open source, so you can read the code or [build it yourself](#build-from-source). To open it:
+
+1. Click **Done** (not "Move to Bin").
+2. Open the Apple menu → **System Settings → Privacy & Security**.
+3. Scroll down to **Security**. You will see *"Whisk" was blocked…*. Click **Open Anyway**.
+4. Confirm with Touch ID or your password, then click **Open**.
+5. Whisk asks for **Accessibility** and **Screen Recording**. Turn both on in Privacy & Security, then open Whisk again.
+
+You only do this once.
+
+**No "Open Anyway" button?** Try opening Whisk once more, then look again: macOS only shows it for about an hour after a blocked launch.
+
+**Says "damaged and can't be opened"?** Run this once in Terminal, then open Whisk again:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Whisk.app
+```
+
+(On macOS 14 and older you can also right-click **Whisk** → **Open** → **Open**.)
 
 ### Build from source
 

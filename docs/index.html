@@ -429,7 +429,7 @@
     <p class="sub reveal" data-speed="0.015" style="--d:.12s">Whisk is not notarized by Apple (that needs a paid developer account), so macOS asks you to confirm the first launch.</p>
     <div class="steps" style="text-align:left">
       <div class="step reveal" data-speed="0.02"><h3>Download</h3><p>Get the latest <b>.dmg</b> from the <a href="https://github.com/nithinkr080/Whisk/releases/latest">Releases page</a> and drag Whisk to Applications.</p></div>
-      <div class="step reveal" data-speed="0.05" style="--d:.08s"><h3>Open it once</h3><p>Right-click Whisk → <b>Open</b> → <b>Open</b>. Or run the command below in Terminal.</p></div>
+      <div class="step reveal" data-speed="0.05" style="--d:.08s"><h3>Open it once</h3><p>If macOS says it can't verify Whisk, press <b>Done</b>, then open <b>System Settings → Privacy &amp; Security</b> and click <b>Open Anyway</b>. Or run the command below in Terminal.</p></div>
       <div class="step reveal" data-speed="0.08" style="--d:.16s"><h3>Grant two permissions</h3><p><b>Accessibility</b> (to detect the shortcut and raise windows) and <b>Screen Recording</b> (for previews).</p></div>
     </div>
     <div class="code reveal" id="cmd">xattr -dr com.apple.quarantine /Applications/Whisk.app<button type="button" onclick="copyCmd(this)">Copy</button></div>
@@ -444,7 +444,7 @@
     <h2 class="reveal" data-speed="0.03" style="--d:.06s">Questions, <span class="grad">answered.</span></h2>
     <div style="margin-top:40px;text-align:left">
       <details class="reveal"><summary>Is Whisk really free?</summary><p>Yes. It is MIT licensed and open source. Every feature is included: there is no paid tier, trial or subscription.</p></details>
-      <details class="reveal"><summary>Why does macOS say it can't be opened?</summary><p>Notarizing an app with Apple costs $99 a year, so Whisk is only signed ad hoc. Right-click → Open once, or run the <code>xattr</code> command above. You can also read and build the source yourself.</p></details>
+      <details class="reveal"><summary>Why does macOS say it can't be opened?</summary><p>Notarizing an app with Apple costs $99 a year, so Whisk is only signed ad hoc. Press Done, then System Settings → Privacy &amp; Security → Open Anyway (on older macOS, right-click → Open), or run the <code>xattr</code> command above. You can also read and build the source yourself.</p></details>
       <details class="reveal"><summary>Why does it need Accessibility and Screen Recording?</summary><p>Accessibility lets Whisk detect your shortcut and raise, close or minimize windows. Screen Recording lets it draw previews of your windows. Previews are kept in memory only, and Whisk never connects to the internet.</p></details>
       <details class="reveal"><summary>Does it work with fullscreen apps and multiple Spaces?</summary><p>Yes, that is a core feature. Choosing a window in a fullscreen app or on another desktop takes you to its Space.</p></details>
       <details class="reveal"><summary>Which Macs and macOS versions are supported?</summary><p>macOS 14 or later, on Apple Silicon and Intel. The Liquid Glass design needs macOS 26 or later; older versions get a frosted fallback.</p></details>

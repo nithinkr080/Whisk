@@ -34,7 +34,7 @@ Grab **Whisk-x.y.z.dmg** (or the `.zip`) from the [Releases page](https://github
 
 Whisk is not notarized by Apple (that needs a paid developer account), so macOS will refuse to open it the first time. Do one of these once:
 
-- Right-click **Whisk** in Applications → **Open** → **Open**, or
+- press **Done** on the warning, then open **System Settings → Privacy & Security** and click **Open Anyway** (on older macOS: right-click **Whisk** → **Open** → **Open**), or
 - run `xattr -dr com.apple.quarantine /Applications/Whisk.app` in Terminal.
 
 ### Build from source
@@ -63,7 +63,7 @@ On first launch Whisk asks for two macOS permissions (System Settings → Privac
 
 Whisk does not record or store your screen, and it makes no network connections. Previews stay in memory and are discarded when the app quits.
 
-The build is signed ad hoc, so macOS may ask you to right-click → Open the first time, and after you rebuild you may need to re-enable the permissions (remove the old Whisk entry and add it again if it looks stuck).
+The build is signed ad hoc, so macOS asks you to confirm it the first time (System Settings → Privacy & Security → Open Anyway), and after you rebuild you may need to re-enable the permissions (remove the old Whisk entry and add it again if it looks stuck).
 
 ## Things to know
 

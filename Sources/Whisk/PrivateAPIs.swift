@@ -57,6 +57,10 @@ func CGSCopySpacesForWindows(_ cid: Int32, _ mask: Int32, _ wids: CFArray) -> CF
 @_silgen_name("CGSGetActiveSpace")
 func CGSGetActiveSpace(_ cid: Int32) -> Int
 
+/// Moves windows onto one Space (used to keep the switcher panel on the Space the user is looking at).
+@_silgen_name("CGSMoveWindowsToManagedSpace")
+func CGSMoveWindowsToManagedSpace(_ cid: Int32, _ wids: CFArray, _ space: Int)
+
 @_silgen_name("CGSManagedDisplaySetCurrentSpace")
 func CGSManagedDisplaySetCurrentSpace(_ cid: Int32, _ display: CFString, _ space: Int)
 

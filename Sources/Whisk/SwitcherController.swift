@@ -10,7 +10,10 @@ final class SwitcherPanel: NSPanel {
         level = .screenSaver
         hidesOnDeactivate = false
         isReleasedWhenClosed = false
-        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+        // Follow the user to whichever Space (desktop or fullscreen app) is active each time the panel is ordered
+        // front. `.canJoinAllSpaces` proved unreliable: after enough Space hopping the window ended up pinned
+        // to a single Space and the switcher appeared on a desktop the user wasn't looking at.
+        collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary, .ignoresCycle]
     }
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
@@ -224,6 +227,7 @@ final class SwitcherController {
         layoutPanel()
         panel.orderFrontRegardless()
         panelVisible = true
+        keepPanelOnCurrentSpace(allowUnplaced: false)
         debugLog("panel shown on \(targetScreen.localizedName)")
         verifyPanelOnScreen()
         guard loadThumbnails, !PerfFlags.noThumbCapture else { return }
@@ -238,17 +242,65 @@ final class SwitcherController {
         return NSScreen.screens.first { NSMouseInRect(p, $0.frame, false) } ?? NSScreen.main ?? NSScreen.screens[0]
     }
 
-    /// Shortly after showing, confirm the panel is really visible; macOS occasionally drops an ordered-front
-    /// window (Space changes, display wake). If it did, put it back.
+    /// Shortly after showing, confirm the panel is really on screen; macOS occasionally drops an ordered-front
+    /// window (Space changes, display wake). If it did, put it back. With debug logging on, also record where the
+    /// panel is and save a snapshot of what it actually draws (~/Library/Logs/Whisk-panel.png).
     private func verifyPanelOnScreen(attempt: Int = 0) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
             guard let self, self.isActive else { return }
-            if !self.panel.isVisible || !self.panel.occlusionState.contains(.visible) {
+            if !self.panel.isVisible {
                 debugLog("panel not visible after show (attempt \(attempt)), re-ordering front")
                 self.layoutPanel()
                 self.panel.orderFrontRegardless()
                 if attempt < 3 { self.verifyPanelOnScreen(attempt: attempt + 1) }
+                return
             }
+            self.keepPanelOnCurrentSpace()
+            self.logPanelState()
+        }
+    }
+
+    /// The Space shown on the given display right now (not the "active" Space, which lags during a Space switch).
+    private func currentSpace(on screen: NSScreen) -> Int {
+        let cid = CGSMainConnectionID()
+        if let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID,
+           let uuid = CGDisplayCreateUUIDFromDisplayID(number)?.takeRetainedValue(),
+           let uuidString = CFUUIDCreateString(nil, uuid) as String?,
+           let displays = CGSCopyManagedDisplaySpaces(cid) as? [[String: Any]] {
+            for d in displays where (d["Display Identifier"] as? String) == uuidString {
+                if let id = (d["Current Space"] as? [String: Any])?["id64"] as? Int { return id }
+            }
+        }
+        return CGSGetActiveSpace(cid)
+    }
+
+    /// If the panel is not on the Space the user is looking at, move it there.
+    private func keepPanelOnCurrentSpace(allowUnplaced: Bool = true) {
+        let wid = panel.windowNumber
+        guard wid > 0 else { return }
+        let cid = CGSMainConnectionID()
+        let target = currentSpace(on: targetScreen)
+        let on = CGSCopySpacesForWindows(cid, 7, [wid] as CFArray) as? [Int] ?? []
+        guard !on.contains(target) else { return }
+        // Right after ordering front the window server may not have placed the window yet; the delayed check handles that.
+        if on.isEmpty, !allowUnplaced { return }
+        debugLog("panel was on spaces \(on) but current space is \(target): moving it")
+        CGSMoveWindowsToManagedSpace(cid, [wid] as CFArray, target)
+        panel.orderFrontRegardless()
+    }
+
+    private func logPanelState() {
+        guard UserDefaults.standard.bool(forKey: "debugLog") else { return }
+        let cid = CGSMainConnectionID()
+        let wid = panel.windowNumber
+        let spaces = CGSCopySpacesForWindows(cid, 7, [wid] as CFArray) as? [Int] ?? []
+        debugLog("panel state: wid=\(wid) frame=\(panel.frame) visible=\(panel.isVisible) occlusion=\(panel.occlusionState.rawValue) screen=\(panel.screen?.localizedName ?? "none") windowSpaces=\(spaces) activeSpace=\(CGSGetActiveSpace(cid)) mouse=\(NSEvent.mouseLocation) appHidden=\(NSApp.isHidden) policy=\(NSApp.activationPolicy().rawValue)")
+        if let cg = ThumbnailService.captureWindowList(CGWindowID(wid)) {
+            let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/Whisk-panel.png")
+            try? NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:])?.write(to: url)
+            debugLog("panel snapshot saved: \(cg.width)x\(cg.height)")
+        } else {
+            debugLog("panel snapshot failed")
         }
     }
 

@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         activity = ProcessInfo.processInfo.beginActivity(
             options: [.userInitiatedAllowingIdleSystemSleep, .latencyCritical, .automaticTerminationDisabled, .suddenTerminationDisabled],
             reason: "Whisk listens for the window-switching shortcut")
+        RecentWindows.shared.start()
         permissions.refresh()
         if !permissions.allGranted { showPermissions() }
 

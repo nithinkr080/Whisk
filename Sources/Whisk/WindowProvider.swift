@@ -151,6 +151,16 @@ enum WindowProvider {
         func isFullscreenSpaceWindow(_ w: WindowInfo) -> Bool { w.onOtherSpace && w.isFullscreen }
         for w in result where isFullscreenSpaceWindow(w) { largest[key(w), default: 0] = max(largest[key(w)] ?? 0, w.bounds.width * w.bounds.height) }
         result.removeAll { isFullscreenSpaceWindow($0) && $0.bounds.width * $0.bounds.height < (largest[key($0)] ?? 0) * 0.3 }
+
+        // Most recently used first. Windows we have not seen focused yet keep CoreGraphics' order, after the known ones.
+        RecentWindows.shared.sampleFocusedWindow()
+        let rank = RecentWindows.shared.ranks()
+        let original = Dictionary(uniqueKeysWithValues: result.enumerated().map { ($1.id, $0) })
+        result.sort { a, b in
+            let ra = rank[a.id] ?? Int.max, rb = rank[b.id] ?? Int.max
+            return ra != rb ? ra < rb : original[a.id]! < original[b.id]!
+        }
+        debugLog("order: " + result.prefix(6).map { "\($0.appName)#\($0.id)" }.joined(separator: ", "))
         return result
     }
 
@@ -207,6 +217,7 @@ enum WindowProvider {
 
 enum WindowActions {
     static func focus(_ w: WindowInfo) {
+        RecentWindows.shared.note(w.id)
         debugLog("focus wid=\(w.id) app=\(w.appName) otherSpace=\(w.onOtherSpace) space=\(w.spaceKey) ax=\(w.axWindow != nil) min=\(w.isMinimized)")
         // Raising the window's own Accessibility element makes macOS switch to its Space natively (with the
         // normal animation), including fullscreen Spaces. Other-Space windows have no element yet: find it.

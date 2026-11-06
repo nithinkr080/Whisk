@@ -39,6 +39,11 @@ MainActor.assumeIsolated {
         debugRealPerf(report: args[i + 1], flags: Array(args.dropFirst(i + 2)))
         exit(0)
     }
+    if let i = args.firstIndex(of: "--probe-time"), args.count > i + 1 {
+        _ = NSApplication.shared
+        debugProbeTimes(report: args[i + 1])
+        exit(0)
+    }
     if args.contains("--list") || args.contains("--focus") {
         _ = NSApplication.shared
         debugListWindows(focus: args.firstIndex(of: "--focus").flatMap { args.count > $0 + 1 ? Int(args[$0 + 1]) : nil })

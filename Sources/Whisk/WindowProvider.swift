@@ -194,10 +194,15 @@ enum WindowProvider {
 
     private static func axWindows(for pid: pid_t) -> [CGWindowID: AXWin] {
         let app = AXUIElementCreateApplication(pid)
-        AXUIElementSetMessagingTimeout(app, 0.4)
+        AXUIElementSetMessagingTimeout(app, 0.3)
+        // A busy app answers slowly; don't let it hold the switcher up. Whatever isn't read in time still shows
+        // up from the CoreGraphics list, just without accessibility details.
+        let deadline = Date().addingTimeInterval(0.35)
         guard let wins: [AXUIElement] = AX.attr(app, kAXWindowsAttribute) else { return [:] }
         var out = [CGWindowID: AXWin]()
         for w in wins {
+            if Date() > deadline { debugLog("window list: pid \(pid) too slow, skipped remaining windows"); break }
+            AXUIElementSetMessagingTimeout(w, 0.15)
             var wid: CGWindowID = 0
             guard _AXUIElementGetWindow(w, &wid) == .success, wid != 0 else { continue }
             let role: String? = AX.attr(w, kAXRoleAttribute)
@@ -222,15 +227,55 @@ enum WindowActions {
         // Raising the window's own Accessibility element makes macOS switch to its Space natively (with the
         // normal animation), including fullscreen Spaces. Other-Space windows have no element yet: find it.
         if w.onOtherSpace, w.axWindow == nil {
-            w.axWindow = findAXWindow(pid: w.pid, windowID: w.id)
-            debugLog("  probed accessibility element: \(w.axWindow != nil ? "found" : "NOT found")")
+            if let cached = cachedElement(w.id) {
+                w.axWindow = cached
+            } else {
+                // Probing can take a while if the app is busy: do it off the main thread so the keyboard
+                // shortcut keeps working meanwhile, then finish the switch on the main thread.
+                probeQueue.async {
+                    let start = Date()
+                    let element = findAXWindow(pid: w.pid, windowID: w.id)
+                    debugLog(String(format: "  probed accessibility element: %@ in %.0f ms", element != nil ? "found" : "NOT found", Date().timeIntervalSince(start) * 1000))
+                    DispatchQueue.main.async {
+                        if let element { w.axWindow = element; remember(element, for: w.id) }
+                        focusNow(w)
+                    }
+                }
+                return
+            }
         }
         focusNow(w)
     }
 
+    private static let probeQueue = DispatchQueue(label: "whisk.ax-probe", qos: .userInteractive)
+
+    // Elements found by probing, so switching back to the same window doesn't probe again.
+    private static let cacheLock = NSLock()
+    nonisolated(unsafe) private static var elementCache = [CGWindowID: AXUIElement]()
+
+    private static func remember(_ element: AXUIElement, for wid: CGWindowID) {
+        cacheLock.lock(); defer { cacheLock.unlock() }
+        if elementCache.count > 300 { elementCache.removeAll() }
+        elementCache[wid] = element
+    }
+
+    private static func cachedElement(_ wid: CGWindowID) -> AXUIElement? {
+        cacheLock.lock()
+        let element = elementCache[wid]
+        cacheLock.unlock()
+        guard let element else { return nil }
+        var found: CGWindowID = 0
+        guard _AXUIElementGetWindow(element, &found) == .success, found == wid else {
+            cacheLock.lock(); elementCache[wid] = nil; cacheLock.unlock()
+            return nil
+        }
+        return element
+    }
+
     /// Probes the app's accessibility element ids until one is the window with the given id.
-    private static func findAXWindow(pid: pid_t, windowID: CGWindowID, limit: UInt64 = 2500) -> AXUIElement? {
-        AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), 0.08)
+    static func findAXWindow(pid: pid_t, windowID: CGWindowID, limit: UInt64 = 2500, budget: TimeInterval = 0.8) -> AXUIElement? {
+        let deadline = Date().addingTimeInterval(budget)
+        var timeouts = 0
         var token = Data(count: 20)
         token.withUnsafeMutableBytes { raw in
             raw.storeBytes(of: Int32(pid), toByteOffset: 0, as: Int32.self)
@@ -240,8 +285,18 @@ enum WindowActions {
         for id in 0..<limit {
             token.withUnsafeMutableBytes { $0.storeBytes(of: id, toByteOffset: 12, as: UInt64.self) }
             guard let element = _AXUIElementCreateWithRemoteToken(token as CFData)?.takeRetainedValue() else { continue }
+            AXUIElementSetMessagingTimeout(element, 0.05)
             var found: CGWindowID = 0
-            if _AXUIElementGetWindow(element, &found) == .success, found == windowID,
+            let err = _AXUIElementGetWindow(element, &found)
+            // An app that keeps timing out is busy or hung: stop instead of waiting on it thousands of times.
+            if err == .cannotComplete {
+                timeouts += 1
+                if timeouts >= 3 { debugLog("  probe gave up: app not responding"); return nil }
+            } else {
+                timeouts = 0
+            }
+            if id % 64 == 0, Date() > deadline { debugLog("  probe gave up: over time budget at id \(id)"); return nil }
+            if err == .success, found == windowID,
                (AX.attr(element, kAXRoleAttribute) as String?) == kAXWindowRole {
                 return element
             }

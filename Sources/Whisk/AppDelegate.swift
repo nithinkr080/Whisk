@@ -19,6 +19,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         activity = ProcessInfo.processInfo.beginActivity(
             options: [.userInitiatedAllowingIdleSystemSleep, .latencyCritical, .automaticTerminationDisabled, .suddenTerminationDisabled],
             reason: "Whisk listens for the window-switching shortcut")
+        // Every Accessibility call to another app blocks until it answers, 6 s by default. A busy app could then
+        // freeze Whisk (and with it the shortcut) for a long time, so cap the wait for every element we don't set
+        // explicitly.
+        AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), 0.25)
         RecentWindows.shared.start()
         permissions.refresh()
         if !permissions.allGranted { showPermissions() }
@@ -48,6 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let before = permissions.allGranted
         permissions.refresh()
         installHotKeysIfPossible()
+        hotKeys.ensureHealthy()
         if !before, permissions.allGranted {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in self?.permissionsWindow?.close() }
         }

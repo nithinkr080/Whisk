@@ -41,6 +41,22 @@ final class HotKeyManager {
         return true
     }
 
+    /// Called every second. macOS can switch a tap off (if a callback was ever slow) or invalidate it; either way
+    /// the shortcut would silently stop working until Whisk was restarted. Turn it back on, or rebuild it.
+    func ensureHealthy() {
+        guard let tap else { return }
+        if !CFMachPortIsValid(tap) {
+            debugLog("event tap was invalidated: recreating it")
+            if let source { CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes) }
+            self.tap = nil
+            self.source = nil
+            if install() { applySystemShortcutOverrides() }
+        } else if !CGEvent.tapIsEnabled(tap: tap) {
+            debugLog("event tap was disabled: re-enabling it")
+            CGEvent.tapEnable(tap: tap, enable: true)
+        }
+    }
+
     /// ⌘Tab / ⌘` are owned by the system; free them up while ⌘ is the chosen trigger.
     func applySystemShortcutOverrides() {
         let takeOver = Settings.shared.triggerModifier == .command
@@ -55,6 +71,7 @@ final class HotKeyManager {
         let pass = Unmanaged.passUnretained(event)
 
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+            debugLog("event tap disabled by macOS (\(type == .tapDisabledByTimeout ? "timeout" : "user input")): re-enabling")
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
             return pass
         }

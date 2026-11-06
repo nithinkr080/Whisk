@@ -80,7 +80,10 @@ final class SwitcherController {
     @discardableResult
     func begin(mode: SwitchMode, reverse: Bool) -> Bool {
         guard !isActive else { return true }
+        let started = Date()
         let list = WindowProvider.windows(mode: mode)
+        let elapsed = Date().timeIntervalSince(started)
+        if elapsed > 0.2 { debugLog(String(format: "slow window list: %.0f ms", elapsed * 1000)) }
         guard !list.isEmpty else { return false }
         model.windows = list
         model.selected = list.count > 1 ? (reverse ? list.count - 1 : 1) : 0

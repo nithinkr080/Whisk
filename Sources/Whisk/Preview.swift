@@ -270,3 +270,25 @@ func debugRealPerf(report path: String, flags: [String]) {
     if let h = FileHandle(forWritingAtPath: path) { h.seekToEndOfFile(); h.write((line + "\n").data(using: .utf8)!); try? h.close() }
     else { try? (line + "\n").write(toFile: path, atomically: true, encoding: .utf8) }
 }
+
+/// Developer aid: `Whisk --probe-time <report>` times the window list and the accessibility probe that focusing
+/// a window on another Space needs, without focusing anything (read-only).
+func debugProbeTimes(report: String) {
+    AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), 0.25)   // same as the running app
+    var out = ""
+    let t0 = Date()
+    let list = WindowProvider.windows(mode: .allApps)
+    out += String(format: "window list: %d windows in %.0f ms\n", list.count, Date().timeIntervalSince(t0) * 1000)
+    let args = CommandLine.arguments
+    if let i = args.firstIndex(of: "--probe-time"), args.count > i + 3, let pid = Int32(args[i + 2]), let wid = UInt32(args[i + 3]) {
+        let t = Date()
+        let found = WindowActions.findAXWindow(pid: pid, windowID: wid) != nil
+        out += String(format: "forced probe pid %d #%u: %@ in %.0f ms\n", pid, wid, found ? "found" : "NOT found", Date().timeIntervalSince(t) * 1000)
+    }
+    for w in list where w.onOtherSpace && w.axWindow == nil {
+        let t = Date()
+        let found = WindowActions.findAXWindow(pid: w.pid, windowID: w.id) != nil
+        out += String(format: "probe %@ #%u: %@ in %.0f ms\n", w.appName, w.id, found ? "found" : "NOT found", Date().timeIntervalSince(t) * 1000)
+    }
+    try? out.write(toFile: report, atomically: true, encoding: .utf8)
+}
